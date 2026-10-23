@@ -22,41 +22,29 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Gradle
+      - name: Setup Gradle 8
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 8.7
 
-      - name: Grant execute permission for gradlew
-        run: gradle assembleDebug --stacktrace --no-daemon
-
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace --no-daemon
+        run: gradle assembleDebug --stacktrace --no-daemon
 
       - name: Locate Debug APK
         id: locate_apk
         run: |
           APK_FILE=$(find app/build/outputs/apk/debug/ -name "*.apk" | head -n 1)
           if [ -z "$APK_FILE" ]; then
-            echo "Error: No APK file found in app/build/outputs/apk/debug/"
+            echo "Error: No APK file found"
             exit 1
           fi
-          echo "Found APK at: $APK_FILE"
           echo "apk_path=$APK_FILE" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release and Upload APK
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
-          name: "Flappy Bird Arcade Build #${{ github.run_number }}"
-          body: |
-            ### Android APK Build #${{ github.run_number }}
-            - **App Name:** Flappy Bird Arcade
-            - **Commit:** `${{ github.sha }}`
-            - **Trigger:** Automated build by **HTML to APK Studio**
-            
-            ---
-            *Note: This is a debug-signed APK. When installing on your Android device, you may need to allow unknown apps in Settings and tap "Install anyway" on Google Play Protect.*
+          name: "Build #${{ github.run_number }}"
           files: ${{ steps.locate_apk.outputs.apk_path }}
           draft: false
           prerelease: false
